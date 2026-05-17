@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>mcgrady-html-standard — Claude Code skill for reader-facing HTML</title>
+<style>
+  :root {
+    --ink: #1a1f2e;
+    --muted: #5b6478;
+    --bg: #ffffff;
+    --rg-bg: #eef4fb;
+    --rg-border: #c7dbef;
+    --accent: #224595;
+    --card-bg: #f7f9fc;
+    --card-border: #dde3ec;
+    --good-bg: #e7f5ec;
+    --good-ink: #1f7a3a;
+    --warn-bg: #fff4d6;
+    --warn-ink: #8a6400;
+    --bad-bg: #fde4e4;
+    --bad-ink: #a31c1c;
+    --neutral-bg: #ecedf0;
+    --neutral-ink: #44495a;
+    --step-bg: #ffffff;
+    --step-border: #c5cdde;
+    --arrow: #6a7589;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px 80px;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  header.repo-head {
+    border-bottom: 2px solid var(--ink);
+    padding: 28px 0 18px;
+    margin-bottom: 18px;
+  }
+  header.repo-head h1 { margin: 0 0 4px; font-size: 28px; }
+  header.repo-head .tagline { color: var(--muted); font-size: 15px; margin-bottom: 12px; }
+  header.repo-head .badges { margin-top: 10px; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 6px;
+    background: var(--neutral-bg);
+    color: var(--neutral-ink);
+    font-family: -apple-system, "SF Mono", Menlo, monospace;
+  }
+  .badge.ver { background: #e7eefc; color: var(--accent); }
+  .badge.lic { background: #e7f5ec; color: var(--good-ink); }
+  .badge.tier { background: #fff4d6; color: var(--warn-ink); }
+
+  h2 { font-size: 21px; margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--card-border); }
+  h3 { font-size: 16px; margin: 22px 0 8px; }
+
+  nav.toc {
+    background: #fafbfd;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin: 0 0 20px;
+  }
+  nav.toc h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  nav.toc ol { margin: 0; padding-left: 22px; }
+  nav.toc li { margin: 3px 0; font-size: 14px; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+
+  .reader-guide {
+    background: var(--rg-bg);
+    border-left: 4px solid var(--rg-border);
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 10px 0 18px;
+    font-size: 14px;
+  }
+  .reader-guide .rg-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 3px 0; }
+  .reader-guide .rg-label { font-weight: 600; color: var(--muted); }
+
+  .verdict-banner {
+    background: var(--good-bg);
+    border: 1px solid #9bcfae;
+    color: var(--good-ink);
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 10px 0 18px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .verdict-banner .v-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75; display: block; margin-bottom: 4px; }
+
+  table.routing { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 6px; }
+  table.routing th, table.routing td { padding: 8px 12px; border-bottom: 1px solid var(--card-border); text-align: left; vertical-align: top; }
+  table.routing th { background: #f7f9fc; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  table.routing td.target { white-space: nowrap; font-weight: 600; }
+
+  .chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 11px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .chip-good    { background: var(--good-bg);    color: var(--good-ink); }
+  .chip-warn    { background: var(--warn-bg);    color: var(--warn-ink); }
+  .chip-bad     { background: var(--bad-bg);     color: var(--bad-ink); }
+  .chip-neutral { background: var(--neutral-bg); color: var(--neutral-ink); }
+
+  /* install flow — vertical boxes with arrows between */
+  .flow {
+    margin: 20px 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .flow-step {
+    background: var(--step-bg);
+    border: 1px solid var(--step-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .flow-step .step-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .flow-step .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .flow-step .step-title { font-weight: 600; font-size: 15px; }
+  .flow-step .step-body { font-size: 13.5px; color: var(--muted); }
+  .flow-step pre {
+    background: #0f1320;
+    color: #e6e8ef;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    overflow-x: auto;
+  }
+  .flow-arrow {
+    align-self: center;
+    margin: 8px 0;
+    color: var(--arrow);
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .feature {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+  }
+  .feature h4 { margin: 0 0 4px; font-size: 14px; }
+  .feature p { margin: 0; color: var(--muted); }
+
+  pre.codeblock {
+    background: #0f1320;
+    color: #e6e8ef;
+    border-radius: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.5;
+    margin: 10px 0;
+  }
+  pre.codeblock .comment { color: #8a93a7; }
+  pre.codeblock .ok { color: #8be9ad; }
+
+  code.inline {
+    background: rgba(0,0,0,0.05);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  details { margin: 10px 0; }
+  details summary { cursor: pointer; padding: 8px 12px; background: #f5f7fb; border: 1px solid var(--card-border); border-radius: 6px; font-weight: 600; font-size: 13.5px; }
+  details[open] summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  details .details-body { border: 1px solid var(--card-border); border-top: 0; border-radius: 0 0 6px 6px; padding: 12px 14px; background: #fbfcfe; font-size: 13.5px; }
+
+  .back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--ink);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  @media print {
+    .back-to-top { display: none; }
+  }
+  @media (max-width: 720px) {
+    .feature-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body id="top">
+
+<header class="repo-head">
+  <h1>mcgrady-html-standard</h1>
+  <div class="tagline">A Claude Code skill that turns any reader-facing HTML — reports, dashboards, explainers, comparisons, briefings — into a single, self-guiding, CSS-only file that a human can scan top-down without window-switching.</div>
+  <div class="badges">
+    <span class="badge ver">v0.1.0</span>
+    <span class="badge lic">MIT</span>
+    <span class="badge tier">tier: orchestration</span>
+    <span class="badge">trigger: /mcgrady-html-standard</span>
+  </div>
+</header>
+
+<nav class="toc" id="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#what">§1 &nbsp;What this is</a></li>
+    <li><a href="#howto">§2 &nbsp;How to read this README</a></li>
+    <li><a href="#install">§3 &nbsp;Install (flow)</a></li>
+    <li><a href="#use">§4 &nbsp;How to trigger it</a></li>
+    <li><a href="#enforces">§5 &nbsp;What the skill enforces</a></li>
+    <li><a href="#example">§6 &nbsp;Quick before / after example</a></li>
+    <li><a href="#license">§7 &nbsp;License &amp; contributing</a></li>
+  </ol>
+</nav>
+
+<section id="what">
+<h2>§1 &nbsp;What this is</h2>
+
+<div class="verdict-banner">
+  <span class="v-label">In one sentence</span>
+  Drop this skill into <code class="inline">~/.claude/skills/</code> and every HTML report you ask Claude Code to produce will have a TOC, a verdict banner, a "How to read this" routing table, per-chapter Reader's Guides, and a 4-layer expansion of every item you must act on — no JavaScript, no CDN, no dispersed multi-file output.
+</div>
+
+<p>
+This is a <strong>Tier&nbsp;B (orchestration)</strong> skill — a single <code class="inline">SKILL.md</code> file that Claude Code auto-loads and uses as a style guide whenever it is about to write or render an HTML page a human will read. There is no Python, no dependencies, no setup beyond placing the file. The skill applies across many reader-facing archetypes:
+</p>
+
+<div class="feature-grid">
+  <div class="feature"><h4>Audit / judgment reports</h4><p>cross-vendor co-audit, code review summary, security review</p></div>
+  <div class="feature"><h4>Progress snapshots</h4><p>OKR mid-quarter status, sprint review</p></div>
+  <div class="feature"><h4>Benchmark results</h4><p>perf regression run, threshold-check report</p></div>
+  <div class="feature"><h4>Retrospectives</h4><p>quarter-end retro, post-mortem</p></div>
+  <div class="feature"><h4>Dashboards</h4><p>live ops / cost / SLA snapshots</p></div>
+  <div class="feature"><h4>Explainers / how-tos</h4><p>onboarding docs, RFC walkthroughs</p></div>
+  <div class="feature"><h4>Option-comparison briefs</h4><p>"which X should we pick" trade-off matrices</p></div>
+  <div class="feature"><h4>Milestone briefings</h4><p>"what ships in M6" announcements</p></div>
+</div>
+
+<p>
+Explicitly <strong>not</strong> for raw data dumps (raw logs, file diffs, JSON pretty-prints) — those are machine-readable and should stay raw.
+</p>
+</section>
+
+<section id="howto">
+<h2>§2 &nbsp;How to read this README</h2>
+
+<table class="routing">
+  <thead>
+    <tr><th>If you want to …</th><th class="target">Jump to</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Understand what this skill is in 30 seconds</td><td class="target"><a href="#what">§1</a></td></tr>
+    <tr><td>Install it on your machine right now</td><td class="target"><a href="#install">§3</a></td></tr>
+    <tr><td>See how to trigger it (auto vs manual)</td><td class="target"><a href="#use">§4</a></td></tr>
+    <tr><td>Know what rules the skill will enforce on your HTML output</td><td class="target"><a href="#enforces">§5</a></td></tr>
+    <tr><td>See a before/after of raw output vs skill-shaped output</td><td class="target"><a href="#example">§6</a></td></tr>
+    <tr><td>Read the license / contribute</td><td class="target"><a href="#license">§7</a></td></tr>
+  </tbody>
+</table>
+</section>
+
+<section id="install">
+<h2>§3 &nbsp;Install (flow)</h2>
+
+<div class="reader-guide">
+  <div class="rg-row"><div class="rg-label">Why this matters</div><div>No build, no dependency install. Just drop one Markdown file into your Claude Code skills directory. Total time &lt; 1 minute.</div></div>
+  <div class="rg-row"><div class="rg-label">What to focus on</div><div>Four steps below. Step 3 is the only "magic" — Claude Code reads the YAML frontmatter and auto-loads the skill on its next session.</div></div>
+  <div class="rg-row"><div class="rg-label">Bottom line</div><div>Clone → copy → restart session → use.</div></div>
+</div>
+
+<div class="flow">
+  <div class="flow-step">
+    <div class="step-head"><span class="step-num">1</span><span class="step-title">Clone this repo</span></div>
+    <div class="step-body">Anywhere on your machine — a scratch directory is fine.</div>
+    <pre>git clone https://github.com/Jordanplus/mcgrady-html-standard.git</pre>
+  </div>
+
+  <div class="flow-arrow">▼</div>
+
+  <div class="flow-step">
+    <div class="step-head"><span class="step-num">2</span><span class="step-title">Place the skill folder under your Claude Code skills directory</span></div>
+    <div class="step-body">User-scope skills live at <code class="inline">~/.claude/skills/</code>. Move the freshly-cloned folder into it.</div>
+    <pre>mkdir -p ~/.claude/skills
+mv mcgrady-html-standard ~/.claude/skills/</pre>
+    <div class="step-body" style="margin-top:6px;">
+      <strong>Project-scope alternative:</strong> place it at <code class="inline">&lt;your-project&gt;/.claude/skills/mcgrady-html-standard/</code> if you only want it active inside one project.
+    </div>
+  </div>
+
+  <div class="flow-arrow">▼</div>
+
+  <div class="flow-step">
+    <div class="step-head"><span class="step-num">3</span><span class="step-title">Claude Code auto-discovers the skill</span></div>
+    <div class="step-body">No config edit. On the next Claude Code session, the YAML frontmatter's <code class="inline">name</code> and <code class="inline">description</code> are indexed; the skill loads automatically whenever you ask Claude to produce a reader-facing HTML.</div>
+  </div>
+
+  <div class="flow-arrow">▼</div>
+
+  <div class="flow-step">
+    <div class="step-head"><span class="step-num">4</span><span class="step-title">Use it</span></div>
+    <div class="step-body">Two ways:</div>
+    <pre><span class="comment"># auto: just ask for an HTML report — skill loads on description match</span>
+&gt; produce an HTML review comparing baseline vs with-skill runs
+
+<span class="comment"># manual: explicit slash trigger</span>
+&gt; /mcgrady-html-standard</pre>
+  </div>
+</div>
+
+<details>
+  <summary>Uninstall</summary>
+  <div class="details-body">
+    <pre class="codeblock">rm -rf ~/.claude/skills/mcgrady-html-standard</pre>
+    Restart the Claude Code session. The skill is no longer indexed.
+  </div>
+</details>
+</section>
+
+<section id="use">
+<h2>§4 &nbsp;How to trigger it</h2>
+
+<table class="routing">
+  <thead><tr><th>Trigger</th><th>When it fires</th><th>Example user prompt</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="chip chip-good">auto</span></td>
+      <td>Claude is about to write or render an HTML file a human will read.</td>
+      <td>"produce an HTML report comparing these three runs"</td>
+    </tr>
+    <tr>
+      <td><span class="chip chip-good">auto</span></td>
+      <td>User asks for "dashboard / review / audit summary / explainer / comparison brief".</td>
+      <td>"draft a dashboard summarizing SLA over Q2"</td>
+    </tr>
+    <tr>
+      <td><span class="chip chip-good">auto</span></td>
+      <td>Claude is consolidating multiple JSON / log artifacts into one reader-facing surface.</td>
+      <td>"turn these 5 eval JSONs into a review"</td>
+    </tr>
+    <tr>
+      <td><span class="chip chip-neutral">manual</span></td>
+      <td>You want to explicitly invoke the rules even if Claude did not auto-detect.</td>
+      <td><code class="inline">/mcgrady-html-standard</code></td>
+    </tr>
+    <tr>
+      <td><span class="chip chip-bad">skip</span></td>
+      <td>Output is raw machine-readable data (logs, pretty JSON, file diffs).</td>
+      <td>"dump the raw test log to disk"</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="enforces">
+<h2>§5 &nbsp;What the skill enforces</h2>
+
+<div class="reader-guide">
+  <div class="rg-row"><div class="rg-label">Why this matters</div><div>Before installing, know what the skill will change in Claude's HTML output. Nothing here is a surprise — the skill is opinionated on purpose.</div></div>
+  <div class="rg-row"><div class="rg-label">What to focus on</div><div>7 rules below. The four-layer template (rule 4) is the most opinionated and only fires on items that need reader action.</div></div>
+  <div class="rg-row"><div class="rg-label">Bottom line</div><div>Single self-contained file, structured for top-down scanning, no JS, no CDN.</div></div>
+</div>
+
+<ol>
+  <li><strong>Single file, chapter-style.</strong> No dispersed <code class="inline">baseline.html / withskill.html / diff.html</code>; one <code class="inline">review.html</code> with §1~§N chapters.</li>
+  <li><strong>Required 6-block structure.</strong> Header → §1 Executive TL;DR (with verdict banner) → §2 How-to-read routing table → §3..§N body sections → Appendix (collapsed) → TOC with sticky back-to-top.</li>
+  <li><strong>Per-chapter Reader's Guide.</strong> Every chapter opens with a 3-line guide: <em>Why this matters / What to focus on / Bottom line</em>. Tells the reader what to scan for before they dive in.</li>
+  <li><strong>Four-layer template for flagged items.</strong> Any item where the reader is being asked to decide or act (a failure, a blocker, a threshold breach, a "stop" practice, an alert row) expands into <em>Context anchor / Trigger / Counterpoint / Action</em>. Routine rows (explainer steps, comparison options, normal-status rows) stay one-liners.</li>
+  <li><strong>CSS-only visualization.</strong> Bar charts via <code class="inline">width: X%</code> divs, chip pills via background-color, no JavaScript, no Chart.js / D3, no external CDN, no web fonts.</li>
+  <li><strong>Caller-owned paths.</strong> HTML lives inside the project the report is about (e.g. <code class="inline">your-project/reviews/review.html</code>) — not in <code class="inline">~/Desktop/</code> or any global stash.</li>
+  <li><strong>Output language follows the active <code class="inline">CLAUDE.md</code>.</strong> The HTML's prose / labels / Reader's Guides are rendered in the language your <code class="inline">CLAUDE.md</code> specifies; technical terms, code, file names, and short universal status tokens (PASS / FAIL / DONE) stay in their original form.</li>
+</ol>
+
+<p style="margin-top: 14px;">For the full ruleset (taxonomy table, four-layer template details, ASCII flow diagrams, anti-patterns), see <a href="./SKILL.md"><code class="inline">SKILL.md</code></a> in this repo.</p>
+</section>
+
+<section id="example">
+<h2>§6 &nbsp;Quick before / after example</h2>
+
+<div class="reader-guide">
+  <div class="rg-row"><div class="rg-label">Why this matters</div><div>Concrete shows the shape difference better than abstract rules. Same input data, two outputs.</div></div>
+  <div class="rg-row"><div class="rg-label">What to focus on</div><div>The "after" version answers <em>what / so-what / now-what</em> in the first 2 seconds. The "before" version forces the reader to assemble that themselves.</div></div>
+  <div class="rg-row"><div class="rg-label">Bottom line</div><div>The skill turns a data dump into a scannable verdict.</div></div>
+</div>
+
+<details open>
+  <summary>Before: raw output, no skill</summary>
+  <div class="details-body">
+<pre class="codeblock">&lt;h1&gt;Eval results&lt;/h1&gt;
+&lt;p&gt;ran 3 vendors x 14 assertions = 42 judgments&lt;/p&gt;
+&lt;table&gt;
+  &lt;tr&gt;&lt;th&gt;ID&lt;/th&gt;&lt;th&gt;claude&lt;/th&gt;&lt;th&gt;openai&lt;/th&gt;&lt;th&gt;gemini&lt;/th&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;1/[1]&lt;/td&gt;&lt;td&gt;PASS&lt;/td&gt;&lt;td&gt;PASS&lt;/td&gt;&lt;td&gt;PASS&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;3/[2]&lt;/td&gt;&lt;td&gt;FAIL&lt;/td&gt;&lt;td&gt;FAIL&lt;/td&gt;&lt;td&gt;FAIL&lt;/td&gt;&lt;/tr&gt;
+  ...
+&lt;/table&gt;
+&lt;p&gt;3/[2] needs review&lt;/p&gt;</pre>
+    <p style="margin-top:6px; color: var(--muted); font-size: 13px;">Reader has to scan the whole table to find what's wrong, has no idea why 3/[2] needs review, and has no path to action.</p>
+  </div>
+</details>
+
+<details open>
+  <summary>After: skill-shaped</summary>
+  <div class="details-body">
+    <div class="verdict-banner" style="background: var(--warn-bg); border-color: #e0b400; color: var(--warn-ink); font-size: 14px;">
+      <span class="v-label">§1 Verdict</span>
+      1 regression introduced (3/[2]: Posted Header Credits coverage missing). 41 of 42 judgments PASS. Patch recommended — all 3 judges agree.
+    </div>
+    <p style="font-size: 13px; color: var(--muted); margin: 4px 0;">…followed by §2 routing table, §3..§N chapter bodies, and for entry 3/[2]:</p>
+<pre class="codeblock">3/[2] Report mentions Posted Header Credits=4 ...  <span class="ok">[INTRODUCED]</span>
+  🧭 Context anchor:
+    · Original input: "Analyze PCIe credit-based flow control timeout risks"
+    · Issue: audit on PCIe section of the report skill
+    · Current assertion: must mention Posted Header Credits=4 as bottleneck
+  🔍 Trigger: claude's response (FAIL)
+    judge[claude]:  FAIL — "...never mentions Posted Header Credits=4"
+    judge[openai]:  FAIL — "...discusses NPD=0 but not PH Credits=4"
+    judge[gemini]:  FAIL — "...does not analyze 'Posted Header Credits=4'"
+  📌 Counterpoint: openai's earlier run (PASS) covered:
+    &gt; Posted Header credits = 4 ... can cause posted-write backpressure
+  🛠 Action:
+    (a) Patch the PCIe section to add the keyword "Posted Header Credits"
+    (b) Accept if only one judge dissents — here all 3 FAIL → strong signal, patch
+    (c) Concrete: add a risk entry to docs/pcie_timeout_risks.md; re-run audit</pre>
+    <p style="margin-top:6px; color: var(--muted); font-size: 13px;">Reader sees the verdict in 2 seconds; knows what flagged it, what "good" looks like, and what to do.</p>
+  </div>
+</details>
+</section>
+
+<section id="license">
+<h2>§7 &nbsp;License &amp; contributing</h2>
+
+<p>
+<strong>License:</strong> MIT. See <a href="./LICENSE"><code class="inline">LICENSE</code></a> for the full text. You are free to use, modify, redistribute, and embed this skill in your own pipeline.
+</p>
+
+<p>
+<strong>Contributing:</strong> issues and pull requests welcome on GitHub. Suggested change areas:
+</p>
+<ul>
+  <li>Additional report archetypes (anything you find yourself producing that does not fit the existing taxonomy)</li>
+  <li>More worked examples (the canonical examples cover audit, progress, benchmark — retrospective and dashboard examples are missing and very welcome)</li>
+  <li>Translations of structural labels (the skill says "follow the active CLAUDE.md", but having canonical translations for common languages would shorten the path)</li>
+  <li>Better visual aids inside <code class="inline">SKILL.md</code> (the existing ASCII diagrams work but improvements welcome)</li>
+</ul>
+
+<p>
+<strong>Version:</strong> 0.1.0 (initial release). Breaking changes to the four-layer template names will bump the major version; additive examples / archetypes bump minor.
+</p>
+</section>
+
+<a href="#top" class="back-to-top">↑ TOC</a>
+
+</body>
+</html>
