@@ -1,7 +1,7 @@
 ---
 name: mcgrady-html-standard
-description: Conventions for producing any reader-facing HTML a human is expected to scan top-down — reports, dashboards, explainers / how-to pages, option-comparison briefs, milestone briefings, retrospectives, benchmarks, audits. NOT for raw data dumps (raw logs / file diffs / JSON pretty-prints), which are machine-readable. Loads automatically when the assistant is about to write or render an HTML file the user will read, when the user asks to "produce an HTML report / review / dashboard / explainer / comparison brief", or whenever consolidating multiple JSON / log artifacts into a reader-facing surface. Enforces: single-file chapter layout (not dispersed multi-file), required structure (Header / Exec TL;DR / How-to-read / sections / Appendix / TOC), per-chapter Reader's Guide (3-line "why this matters / what to focus on / bottom line"), the four-layer template (context anchor / trigger / counterpoint / action) for items the reader is asked to act on — flagged failures, blockers, threshold breaches, "stop" practices, alert rows — but NOT for routine entries (explainer steps, comparison options, normal-status rows), CSS-only visualization (no JS / no CDN), caller-owned file paths, and explicit anti-patterns.
-version: 0.1.0
+description: Conventions for producing any reader-facing HTML a human is expected to scan top-down — reports, dashboards, explainers / how-to pages, option-comparison briefs, milestone briefings, retrospectives, benchmarks, audits. NOT for raw data dumps (raw logs / file diffs / JSON pretty-prints), which are machine-readable. Loads automatically when the assistant is about to write or render an HTML file the user will read, when the user asks to "produce an HTML report / review / dashboard / explainer / comparison brief", or whenever consolidating multiple JSON / log artifacts into a reader-facing surface. Enforces: single-file chapter layout (not dispersed multi-file), required structure (Header / Exec TL;DR / How-to-read / sections / Appendix / TOC), per-chapter Reader's Guide (3-line "why this matters / what to focus on / bottom line"), the four-layer template (context anchor / trigger / counterpoint / action) for items the reader is asked to act on — flagged failures, blockers, threshold breaches, "stop" practices, alert rows — but NOT for routine entries (explainer steps, comparison options, normal-status rows), tiered visualization (ASCII / CSS for ≤3-node simple; pre-rendered inline SVG via Mermaid / d2 / graphviz for ≥4 nodes or branching; inline JS-lib bundle for interactive — CDN forbidden at every tier), caller-owned file paths, and explicit anti-patterns.
+version: 0.2.0
 tier: orchestration
 trigger: /mcgrady-html-standard
 ---
@@ -232,7 +232,7 @@ An ID alone (e.g. `3/[2]`) has no mnemonic value for humans; the assertion text 
   🛠 Action:
     (a) Patch the SKILL.md PCIe section to include the keyword "Posted Header Credits"
     (b) Accept: treat as one-off if only one judge dissents — but here all three FAIL → strong signal, patch
-    (c) Concrete: add a risk entry to docs/pcie_timeout_risks.md explicitly requiring PH-credits coverage; re-run audit to verify
+    (c) Concrete: add a risk entry to references/ip-database/pcie_timeout_risks.md explicitly requiring PH-credits coverage; re-run audit to verify
 ```
 
 **Progress snapshot example** (a slipped workstream):
@@ -270,7 +270,56 @@ p99 query latency / payments-api                       [OVER-LIMIT]
 
 ## Visualization preferences
 
-- **Bar charts in pure CSS**: simple table + a `width: X%` div fill, no JS / Chart.js / D3
+### Diagrams — three tiers, pick by complexity
+
+The skill previously mandated CSS-only / no-JS for everything, which forced complex flows into illegible ASCII art. Replaced with a tiered model:
+
+| Tier | When to use | Tool | How it enters HTML | Runtime JS? |
+|---|---|---|---|---|
+| 0 — ASCII / CSS | ≤3 nodes, linear flow, simple list-style | hand-written `<pre>` ASCII or CSS box | inline text | no |
+| 1 — Static inline SVG | ≥4 nodes, OR any branching / merging / cycle, OR ≥2 levels of nesting, OR state machine / DAG meant to be read top-down once | Mermaid CLI (`mmdc`), d2, or graphviz → SVG | paste full `<svg>...</svg>` into HTML body | no |
+| 2 — Interactive | needs zoom / pan / collapse-on-click / hover-expand / live data swap | Mermaid client-side, ECharts, D3 | `<script>` block with the **entire lib bundle inlined** | yes |
+
+**Upgrade rule**: a diagram with **≥4 nodes OR any branch / merge / cycle** MUST be at least tier 1 — do not leave it as ASCII. Linear 3-step "A → B → C" stays at tier 0; that level of complexity does not justify a build step.
+
+**CDN is forbidden at every tier.** Reports get archived, emailed, opened offline, exported to PDF; CDN dependencies break in all of those flows. For tier 2, inline the entire library bundle into the HTML:
+
+```html
+<script>/* full content of mermaid.min.js pasted here */</script>
+<div class="mermaid">flowchart LR ...</div>
+<script>mermaid.initialize({startOnLoad: true});</script>
+```
+
+This makes the HTML larger (Mermaid minified ≈ 2.8 MB), so **do not promote a tier-0 / tier-1 diagram to tier 2 unless the interactivity is actually needed**.
+
+**Local install** (one-time, macOS):
+
+```bash
+brew install d2
+npm install -g @mermaid-js/mermaid-cli
+npx puppeteer browsers install chrome-headless-shell  # mmdc needs headless chromium; postinstall does not pull it automatically
+```
+
+**How to generate tier-1 SVG** (do this before writing the HTML):
+
+```bash
+# Mermaid — default for flowcharts / sequence / state / class diagrams
+mmdc -i diagram.mmd -o diagram.svg -b transparent
+
+# d2 — architecture / layered system diagrams; rounded corners + curved edges by default
+d2 diagram.d2 diagram.svg
+
+# Graphviz — large DAGs; rounded boxes via style=rounded, curved edges via splines=curved
+dot -Tsvg diagram.dot -o diagram.svg
+```
+
+**Recommended repo layout** when a report owns more than ~3 diagrams: put sources next to the HTML in a `diagrams/` sibling directory, with a `render.sh` that loops over `*.d2` / `*.mmd` and re-inlines into the HTML via `data-src="<basename>"` placeholders. This makes diagram edits a one-line re-run instead of manual SVG copy-paste.
+
+Then paste the resulting SVG (including the `<svg>` wrapper) directly into the HTML body. Do NOT use `<img src="diagram.svg">` — that creates an external file dependency and breaks single-file portability.
+
+### Other visual elements
+
+- **Bar charts in pure CSS**: simple table + a `width: X%` div fill; promote to tier 2 (ECharts / Plotly inline) only if you need hover tooltips or live data swap
 - **Verdicts / status as chip pills**: color semantics stay constant across report types (green = good / safe, amber = attention, red = problem, neutral / gray = inconclusive); the labels change per report type:
 
   | Report type | Default chips |
@@ -284,16 +333,16 @@ p99 query latency / payments-api                       [OVER-LIMIT]
 
 ## File characteristics
 
-- **Fully self-contained**: CSS inline in `<head><style>`, no external CDN / fonts / JS framework
-- **Works without JS**: scroll / TOC / details use HTML native, no React / Vue
+- **Fully self-contained**: CSS inline in `<head><style>`; any tier-2 JS library bundled inside `<script>`; no external CDN, no remote fonts, no `<img src="…svg">` pulling separate diagram files
+- **Core navigation works without JS**: TOC, anchors, `<details>` collapse, sticky back-to-top — all HTML/CSS native. JS is reserved for **tier-2 interactive diagrams / charts** and must be inlined (never CDN-loaded)
 - **Semantic markup**: use `<section>` / `<article>` / `<header>` / `<nav>` — friendlier to print / screen readers
 - **Print-friendly**: avoid fixed-position elements that block content when printed
 
 ## Paths and naming
 
 - General convention: place inside the **caller's** own repo, **not in a global location**
-  - ✅ `your-project/reviews/review.html`  (caller-owned, sits inside the project the report is about)
-  - ❌ `~/Desktop/review.html` or `~/reports/X_review.html`  (global location outside any repo, violates caller-owned)
+  - ✅ `IP_review_skill/coeval/review.html`  (caller-owned)
+  - ❌ `~/claude/coeval-reports/X_review.html`  (global location, violates caller-owned)
 - Filenames must be semantically meaningful: `review.html` / `M6_baseline_review.html` / `2026-05-17_release_audit.html`
 - For multiple versions, **put the date or milestone in the filename**, do not rely on modify time
 
@@ -311,8 +360,9 @@ Each row pairs the anti-pattern with the fix:
 |---|---|
 | Multiple independent HTMLs (one per aspect) → reader has to window-switch and rebuild context | One `review.html` with §1~§N chapters + TOC; reader scans top-down, no window switching |
 | Data tables without a Reader's Guide → reader cannot tell which numbers matter | Each chapter opens with Why / Focus / Bottom line — reader knows which numbers matter |
-| External CDN / CSS framework dependency → broken when offline, slow, possibly leaks access patterns | Inline `<style>` in `<head>`, fonts from system stack; works offline, no leak |
-| JS-only interactivity → breaks in restricted environments (VSCode preview / no network) | `<details>` for collapse, anchors for nav, sticky CSS for TOC — all HTML/CSS native |
+| External CDN dependency (CSS framework, web font, JS lib loaded from unpkg / cdnjs / jsdelivr) → breaks when offline / archived / printed, leaks access patterns | Inline `<style>` in `<head>`, fonts from system stack; for tier-2 diagrams paste the full minified lib bundle into an inline `<script>` block — never reference a remote URL |
+| Forcing a ≥4-node or branching diagram into ASCII art because "no JS allowed" → diagram becomes illegible spaghetti | Promote to tier 1: pre-render via Mermaid / d2 / graphviz and inline the resulting `<svg>` into the body; tier-0 ASCII is reserved for ≤3-node linear flows |
+| Promoting every diagram to tier 2 (inline Mermaid + JS) for visual appeal → HTML balloons to 3+ MB, slow to print / email | Use tier 0 (ASCII) or tier 1 (static SVG) by default; only go tier 2 when zoom / pan / collapse / live-data is actually required |
 | Flattening all detail at once → reader is drowned in information on the first paint | Headline / chip / one sentence on first paint; full detail behind `<details>` in Appendix |
 | Placing HTML in `~/Desktop/` or other global location → no version control, cannot find prior runs | Caller-owned path inside caller's repo; filename carries date / milestone |
 

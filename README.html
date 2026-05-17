@@ -232,9 +232,9 @@
 
 <header class="repo-head">
   <h1>mcgrady-html-standard</h1>
-  <div class="tagline">A Claude Code skill that turns any reader-facing HTML — reports, dashboards, explainers, comparisons, briefings — into a single, self-guiding, CSS-only file that a human can scan top-down without window-switching.</div>
+  <div class="tagline">A Claude Code skill that turns any reader-facing HTML — reports, dashboards, explainers, comparisons, briefings — into a single self-guiding HTML file — CSS-first, with inline SVG (d2 / mermaid) for complex diagrams — that a human can scan top-down without window-switching.</div>
   <div class="badges">
-    <span class="badge ver">v0.1.0</span>
+    <span class="badge ver">v0.2.0</span>
     <span class="badge lic">MIT</span>
     <span class="badge tier">tier: orchestration</span>
     <span class="badge">trigger: /mcgrady-html-standard</span>
@@ -259,7 +259,7 @@
 
 <div class="verdict-banner">
   <span class="v-label">In one sentence</span>
-  Drop this skill into <code class="inline">~/.claude/skills/</code> and every HTML report you ask Claude Code to produce will have a TOC, a verdict banner, a "How to read this" routing table, per-chapter Reader's Guides, and a 4-layer expansion of every item you must act on — no JavaScript, no CDN, no dispersed multi-file output.
+  Drop this skill into <code class="inline">~/.claude/skills/</code> and every HTML report you ask Claude Code to produce will have a TOC, a verdict banner, a "How to read this" routing table, per-chapter Reader's Guides, and a 4-layer expansion of every item you must act on — no CDN, no dispersed multi-file output, and JS is reserved for tier-2 interactive diagrams only.
 </div>
 
 <p>
@@ -398,7 +398,7 @@ mv mcgrady-html-standard ~/.claude/skills/</pre>
 <div class="reader-guide">
   <div class="rg-row"><div class="rg-label">Why this matters</div><div>Before installing, know what the skill will change in Claude's HTML output. Nothing here is a surprise — the skill is opinionated on purpose.</div></div>
   <div class="rg-row"><div class="rg-label">What to focus on</div><div>7 rules below. The four-layer template (rule 4) is the most opinionated and only fires on items that need reader action.</div></div>
-  <div class="rg-row"><div class="rg-label">Bottom line</div><div>Single self-contained file, structured for top-down scanning, no JS, no CDN.</div></div>
+  <div class="rg-row"><div class="rg-label">Bottom line</div><div>Single self-contained file, structured for top-down scanning; no CDN at any tier; JS only when an interactive diagram needs it.</div></div>
 </div>
 
 <ol>
@@ -406,7 +406,7 @@ mv mcgrady-html-standard ~/.claude/skills/</pre>
   <li><strong>Required 6-block structure.</strong> Header → §1 Executive TL;DR (with verdict banner) → §2 How-to-read routing table → §3..§N body sections → Appendix (collapsed) → TOC with sticky back-to-top.</li>
   <li><strong>Per-chapter Reader's Guide.</strong> Every chapter opens with a 3-line guide: <em>Why this matters / What to focus on / Bottom line</em>. Tells the reader what to scan for before they dive in.</li>
   <li><strong>Four-layer template for flagged items.</strong> Any item where the reader is being asked to decide or act (a failure, a blocker, a threshold breach, a "stop" practice, an alert row) expands into <em>Context anchor / Trigger / Counterpoint / Action</em>. Routine rows (explainer steps, comparison options, normal-status rows) stay one-liners.</li>
-  <li><strong>CSS-only visualization.</strong> Bar charts via <code class="inline">width: X%</code> divs, chip pills via background-color, no JavaScript, no Chart.js / D3, no external CDN, no web fonts.</li>
+  <li><strong>Tiered visualization.</strong> Tier&nbsp;0: ASCII / CSS for ≤3-node simple flows. Tier&nbsp;1: pre-rendered inline SVG (via Mermaid / d2 / graphviz) for ≥4 nodes or any branching — no runtime JS. Tier&nbsp;2: inline JS-lib bundle for zoom / pan / interactive — only when needed. CDN forbidden at every tier (HTML must work offline, archived, emailed, printed).</li>
   <li><strong>Caller-owned paths.</strong> HTML lives inside the project the report is about (e.g. <code class="inline">your-project/reviews/review.html</code>) — not in <code class="inline">~/Desktop/</code> or any global stash.</li>
   <li><strong>Output language follows the active <code class="inline">CLAUDE.md</code>.</strong> The HTML's prose / labels / Reader's Guides are rendered in the language your <code class="inline">CLAUDE.md</code> specifies; technical terms, code, file names, and short universal status tokens (PASS / FAIL / DONE) stay in their original form.</li>
 </ol>
@@ -485,7 +485,7 @@ mv mcgrady-html-standard ~/.claude/skills/</pre>
 </ul>
 
 <p>
-<strong>Version:</strong> 0.1.0 (initial release). Breaking changes to the four-layer template names will bump the major version; additive examples / archetypes bump minor.
+<strong>Version:</strong> 0.2.0 — added tiered diagram model (Tier&nbsp;0 ASCII / CSS, Tier&nbsp;1 pre-rendered inline SVG via Mermaid / d2 / graphviz, Tier&nbsp;2 inline JS-lib bundle for interactive). 0.1.0 was the initial release. Breaking changes to the four-layer template names will bump the major version; additive examples / archetypes bump minor.
 </p>
 </section>
 
